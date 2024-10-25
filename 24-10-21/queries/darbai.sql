@@ -240,3 +240,144 @@ FROM vykdymas RIGHT OUTER JOIN
 WHERE projektas = 1 or projektas IS NULL;
 
 -- 2.7
+
+SELECT pavarde FROM vykdytojai
+WHERE nr IN (
+				SELECT vykdytojas
+				FROM Vykdymas
+				WHERE Projektas = 1
+			);
+		
+--
+		
+SELECT pavarde FROM vykdytojai
+WHERE nr IN
+	(
+		SELECT vykdytojas FROM vykdymas
+		WHERE projektas IN
+		(
+			SELECT nr FROM projektai
+			WHERE svarba = 'Aukšta'
+		) 
+	);
+
+SELECT DISTINCT pavarde
+FROM vykdytojai, vykdymas, projektai
+WHERE 
+	projektas = projektai.nr AND
+	vykdytojas = vykdytojai.nr AND
+	svarba = 'Aukšta';
+
+--
+
+SELECT DISTINCT vykdytojas FROM vykdymas
+WHERE 
+	vykdytojas <> 1 AND
+	projektas IN 
+		(
+			SELECT projektas
+			FROM vykdymas
+			WHERE vykdytojas = 1
+		);
+	
+--
+	
+SELECT pavarde FROM vykdytojai
+WHERE 1 IN 
+	(
+		SELECT projektas FROM vykdymas
+		WHERE vykdytojas = nr
+	);
+
+-- 2.8
+
+SELECT DISTINCT vykdytojas FROM vykdymas,
+	(
+		SELECT projektas FROM vykdymas
+		WHERE vykdytojas = 1
+	) AS projektai1
+WHERE projektai1.projektas = vykdymas.projektas
+	AND vykdymas.vykdytojas <> 1;
+
+WITH projektai1 AS
+	(
+		SELECT projektas FROM vykdymas
+		WHERE vykdytojas = 1
+	)
+SELECT DISTINCT vykdytojas
+FROM vykdymas, projektai1
+WHERE vykdymas.vykdytojas <> 1 AND
+	projektai1.projektas = vykdymas.projektas;
+
+WITH projektai1 (projektas) AS
+	(
+		SELECT projektas FROM vykdymas
+		WHERE vykdytojas = 1
+	)
+SELECT DISTINCT vykdytojas
+FROM vykdymas, projektai1
+WHERE vykdymas.vykdytojas <> 1 AND
+	projektai1.projektas = vykdymas.projektas;
+
+--
+
+CREATE TEMP TABLE projektai1 AS
+	(
+		SELECT projektas FROM vykdymas
+		WHERE vykdytojas = 1
+	);
+
+SELECT DISTINCT vykdytojas
+FROM vykdymas, projektai1
+WHERE vykdymas.vykdytojas <> 1 AND
+	projektai1.projektas = vykdymas.projektas;
+
+-- 2.9
+
+SELECT pavarde FROM vykdytojai
+WHERE EXISTS 
+	(
+		SELECT * FROM vykdymas
+		WHERE vykdytojas = Nr
+		AND projektas = 1
+	);
+
+SELECT DISTINCT A.kvalifikacija
+FROM vykdytojai A
+WHERE 2 <= ALL 
+	(
+		SELECT B.kategorija
+		FROM vykdytojai B
+		WHERE A.kvalifikacija =
+			B.kvalifikacija
+	);
+
+SELECT A.kvalifikacija
+FROM 
+	(
+		SELECT DISTINCT kvalifikacija
+		FROM vykdytojai
+	) AS A
+WHERE 2 <= ALL
+	(
+		SELECT B.kategorija FROM vykdytojai B
+		WHERE A.kvalifikacija = B.kvalifikacija
+	);
+
+SELECT pavarde FROM vykdytojai
+WHERE Nr = ANY 
+	(
+		SELECT vykdytojas
+		FROM vykdymas
+		WHERE projektas = 1
+	);
+
+SELECT DISTINCT A.kvalifikacija
+FROM vykdytojai A
+WHERE 
+	(
+		SELECT COUNT(*)
+		FROM vykdytojai B
+		WHERE A.kvalifikacija = B.kvalifikacija
+		AND B.kategorija < 2
+	) = 0;
