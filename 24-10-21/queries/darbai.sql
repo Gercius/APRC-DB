@@ -381,3 +381,195 @@ WHERE
 		WHERE A.kvalifikacija = B.kvalifikacija
 		AND B.kategorija < 2
 	) = 0;
+
+-- 2.10
+
+SELECT SUM(valandos) FROM vykdymas
+WHERE projektas = 1;
+
+SELECT projektas, SUM(valandos) AS valandos
+FROM vykdymas
+GROUP BY projektas;
+
+SELECT projektas, vykdytojas,
+	SUM(valandos) AS valandos
+FROM vykdymas GROUP BY projektas; -- Neteisinga
+
+SELECT projektas, SUM(valandos) AS valandos
+FROM vykdymas
+WHERE valandos > 50
+GROUP BY projektas;
+
+SELECT projektas,
+	SUM(valandos) AS valandos,
+	COUNT(valandos) AS vykdymu_skaicius
+FROM vykdymas
+WHERE valandos > 250
+GROUP BY projektas;
+
+SELECT projektas,
+	COUNT(*) AS vykdytojai
+FROM vykdymas
+GROUP BY projektas;
+
+SELECT projektas, COUNT(*) AS vykdytojai
+FROM vykdymas
+GROUP BY projektas
+HAVING COUNT(*) > 3;
+
+SELECT issilavinimas, kategorija,
+	COUNT(*) AS skaicius
+FROM vykdytojai
+WHERE issilavinimas IS NOT NULL
+GROUP BY issilavinimas, kategorija
+ORDER BY issilavinimas;
+
+SELECT pavarde, SUM(valandos) AS valandos
+FROM vykdytojai, vykdymas
+WHERE nr = vykdytojas
+GROUP BY pavarde;
+
+SELECT nr, pavarde, SUM(valandos) AS valandos
+FROM vykdytojai, vykdymas
+WHERE nr = vykdytojas
+GROUP BY nr, pavarde;
+
+--
+
+SELECT vykdytojas, SUM(valandos) AS valandos
+FROM vykdymas GROUP BY vykdytojas;
+
+WITH visu_valandos (nr, valandos) AS
+	(SELECT vykdytojas, SUM(valandos) AS valandos
+	FROM vykdymas GROUP BY vykdytojas)
+SELECT AVG(valandos) FROM visu_valandos;
+
+WITH visu_valandos (nr, valandos)
+	AS (SELECT vykdytojas, SUM(valandos)
+		FROM vykdymas GROUP BY vykdytojas)
+SELECT nr, valandos
+FROM visu_valandos
+WHERE valandos > (SELECT AVG(valandos)
+				  FROM visu_valandos);
+
+WITH visu_valandos (nr, valandos) AS
+	(SELECT vykdytojas, SUM(valandos)
+	 FROM vykdymas GROUP BY vykdytojas)
+SELECT A.nr, pavarde, valandos
+FROM vykdytojai AS A, visu_valandos AS B
+WHERE A.nr = B.nr
+	AND valandos > (SELECT AVG(valandos)
+					FROM visu_valandos);
+
+WITH visu_valandos (nr, valandos) AS
+	(SELECT vykdytojas, SUM(valandos)
+	 FROM vykdymas GROUP BY vykdytojas)
+SELECT A.nr, pavarde, valandos,
+	(SELECT AVG(valandos) FROM visu_valandos)
+FROM vykdytojai AS A, visu_valandos AS B
+WHERE A.nr = B.nr
+	AND valandos > (SELECT AVG(valandos)
+					FROM visu_valandos);
+
+WITH visu_valandos (nr, valandos) AS
+		(SELECT vykdytojas, SUM(valandos)
+		 FROM vykdymas GROUP BY vykdytojas),
+	visu_vidurkis (vidurkis) AS
+		(SELECT AVG(valandos)
+		 FROM visu_valandos)
+SELECT A.nr, pavarde, valandos, vidurkis
+FROM vykdytojai AS A, visu_valandos AS B,
+	visu_vidurkis
+WHERE A.nr = B.nr
+	AND valandos > vidurkis;
+
+WITH visu_valandos (nr, valandos) AS
+		(SELECT vykdytojas, SUM(valandos)
+		 FROM vykdymas GROUP BY vykdytojas),
+	visu_vidurkis (vidurkis) AS
+		(SELECT AVG(CAST(valandos AS FLOAT))
+		 FROM visu_valandos)
+SELECT A.nr, pavarde, valandos,
+		CAST(vidurkis AS DECIMAL(10, 2))
+FROM vykdytojai AS A, visu_valandos AS B,
+	visu_vidurkis
+WHERE A.nr = B.nr AND valandos > vidurkis;
+
+-- 2.12
+
+SELECT nr FROM vykdytojai
+EXCEPT
+SELECT vykdytojas FROM vykdymas
+ORDER BY 1;
+
+SELECT nr, pavarde FROM vykdytojai
+EXCEPT
+SELECT vykdytojas, pavarde
+FROM vykdymas, vykdytojai WHERE vykdytojas = nr
+ORDER BY 1;
+
+--2.13
+
+SELECT pavadinimas, 'Trumpalaikis'
+FROM projektai WHERE trukme <= 6
+UNION
+SELECT pavadinimas, 'Ilgalaikis'
+FROM projektai WHERE trukme > 6;
+
+SELECT pavadinimas,
+	CASE WHEN trukme <= 6
+		 THEN 'Trumpalaikis'
+		 ELSE 'Ilgalaikis' END
+FROM projektai
+WHERE trukme IS NOT NULL;
+
+SELECT pavadinimas,
+	COUNT(DISTINCT vykdytojas)
+		AS visi_vykdytojai,
+	SUM(valandos) AS visu_valandos
+FROM projektai, vykdymas
+WHERE nr = projektas
+GROUP BY pavadinimas;
+
+SELECT pavadinimas,
+	COUNT(DISTINCT vykdytojas) AS informatikai,
+	SUM(valandos) AS informatiku_valandos
+FROM projektai, vykdymas, vykdytojai
+WHERE projektai.nr = projektas
+	AND vykdytojai.nr = vykdytojas
+	AND kvalifikacija = 'Informatikas'
+GROUP BY pavadinimas;
+
+SELECT pavadinimas,
+	COUNT(DISTINCT vykdytojas) AS statistikai,
+	SUM(valandos) AS statistiku_valandos
+FROM projektai, vykdymas, vykdytojai
+WHERE projektai.nr = projektas
+	AND vykdytojai.nr = vykdytojas
+	AND kvalifikacija = 'Statistikas'
+GROUP BY pavadinimas;
+
+SELECT pavadinimas,
+	COUNT(DISTINCT vykdytojas) AS visi_vykdytojai,
+	SUM(valandos) AS visu_valandos,
+	COUNT(DISTINCT CASE
+		WHEN kvalifikacija ='Informatikas'
+		THEN vykdytojas END) AS visi_informatikai,
+	SUM( CASE WHEN kvalifikacija = 'Informatikas'
+	THEN valandos END)
+	AS informatiku_valandos,
+	COUNT(DISTINCT CASE
+		WHEN kvalifikacija = 'Statistikas'
+		THEN vykdytojas END) AS visi_statistikai,
+	SUM(CASE WHEN kvalifikacija = 'Statistikas'
+		THEN valandos END) AS statistiku_valandos
+FROM projektai, vykdymas, vykdytojai
+WHERE projektai.nr = projektas AND
+	vykdytojai.nr = vykdytojas
+GROUP BY pavadinimas;
+
+SELECT pavarde,
+	kategorija AS esama_kategorija,
+	COALESCE(kategorija, 0) + 1
+		AS naujoji_kategorija
+FROM vykdytojai;
