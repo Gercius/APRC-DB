@@ -1,0 +1,18 @@
+// Užduotis: Sukurti skaičiuoklę su Redis
+// 1
+SET skaitiklis 0
+INCR skaitiklis
+DECR skaitiklis
+
+// 2
+GET skaitiklis
+
+// Darbas su duomenų galiojimu
+SET skaitiklis 10 EX 60
+GET skaitiklis
+
+// Praktinė užduotis
+SET laikinas_slapt laikinas_slapt EX 30
+
+PUBLISH klases_chat "Sveikas, kaip sekasi?"
+SUBSCRIBE klases_chat

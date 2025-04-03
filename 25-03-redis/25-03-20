@@ -1,0 +1,63 @@
+PING
+
+// Pagrindinės Redis komandos
+// 1
+SET vartotojas "Jonas"
+
+// 2
+GET vartotojas
+
+// 3
+SET vartotojas "Petras"
+
+// 4
+SET amzius 25
+
+// 5
+GET amzius
+
+// 6
+DEL vartotojas
+
+// 7
+EXISTS vartotojas
+
+// Darbas su duomenų struktūromis
+// 1
+LPUSH pomegiai "Knygos"
+LPUSH pomegiai "Sportas"
+LPUSH pomegiai "Programavimas"
+
+// 2
+LRANGE pomegiai 0 -1
+
+// 3
+HSET vartotojas:1 vardas "Jonas" amzius 30 miestas "Vilnius"
+
+// 4
+HGETALL vartotojas:1
+
+// 5
+SADD krepselis "Obuolys" "Bananai" "Vynuogės"
+
+// 6
+SMEMBERS krepselis
+
+// Savarankiškas iššūkis 
+// 1
+LPUSH uzsakymai "Kede"
+LPUSH uzsakymai "Lova"
+LPUSH uzsakymai "Sofa"
+
+// 2
+SADD miestai "Vilnius" "Kaunas" "Palanga"
+
+// 3
+SET vartotojas "Jonas"
+EXPIRE vartotojas 60
+
+// 4
+SCARD krepselis 
+
+// 5
+FLUSHALL 
